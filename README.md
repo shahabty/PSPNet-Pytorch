@@ -10,6 +10,6 @@ This Repo contains an implemetation of "Pyramid Scene Parsing Network" in Pytorc
 
 ## Note
 
--Weight convesion from Caffe to Pytorch is modified from [pytorch-semseg](https://github.com/meetshah1995/pytorch-semseg).
--Preprocessing and loss function is modified from [pytorch-semantic-segmentation](https://github.com/zijundeng/pytorch-semantic-segmentation)
+Weight convesion from Caffe to Pytorch is modified from [pytorch-semseg](https://github.com/meetshah1995/pytorch-semseg).
+Preprocessing and loss function is modified from [pytorch-semantic-segmentation](https://github.com/zijundeng/pytorch-semantic-segmentation)
 Since the differences were huge, I decided not to add a branch to any of the the above project.

@@ -9,11 +9,12 @@ on Validation set of CityScapes Dataset.
 3. Download Cityscapes Dataset from [Here](https://www.cityscapes-dataset.com/)
 4. Download Caffe Pretrained from [Here](https://drive.google.com/open?id=0BzaU285cX7TCT1M3TmNfNjlUeEU) and put it in Caffe-PSPNet folder
 4. Run python main.py
+
 ##Qualitative 
 <p float="left">
-  <img src="prediction/1.png" width="100" />
-  <img src="prediction/2.png" width="100" /> 
-  <img src="prediction/3.png" width="100" />
+  <img src="prediction/1.png" width="200" />
+  <img src="prediction/2.png" width="200" /> 
+  <img src="prediction/3.png" width="200" />
 </p>
 
 

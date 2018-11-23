@@ -6,7 +6,7 @@ from torch.utils import data
 
 num_classes = 19
 ignore_label = 255
-root = '/mnt/vana/nabaviss/datasets'
+root = '/mnt/vana/nabaviss/datasets/CITYSCAPES'
 
 palette = [128, 64, 128, 244, 35, 232, 70, 70, 70, 102, 102, 156, 190, 153, 153, 153, 153, 153, 250, 170, 30,
            220, 220, 0, 107, 142, 35, 152, 251, 152, 70, 130, 180, 220, 20, 60, 255, 0, 0, 0, 0, 142, 0, 0, 70,
@@ -22,47 +22,32 @@ def colorize_mask(mask):
 
     return new_mask
 
-def make_dataset(mode):
-    if mode == None:
-        return 0
+def make_dataset(quality, mode):
+    assert (quality == 'fine' and mode in ['train', 'val']) or \
+           (quality == 'coarse' and mode in ['train', 'train_extra', 'val'])
 
-    gt_path = 'CITYSCAPES/gtFine_trainvaltest/gtFine'
-    input_path = 'leftImg8bit_sequence'
-    
-    input_dir  = os.path.join(root,input_path,mode)
-    gt_dir = os.path.join(root,gt_path,mode)
-
-    categories = sorted(os.listdir(input_dir))
-    
-    imgs = []
-    gts = []
-    item_inps = ''
+    if quality == 'coarse':
+        img_dir_name = 'leftImg8bit_trainextra' if mode == 'train_extra' else 'leftImg8bit_trainvaltest'
+        mask_path = os.path.join(root, 'gtCoarse', 'gtCoarse', mode)
+        mask_postfix = '_gtCoarse_labelIds.png'
+    else:
+        img_dir_name = 'leftImg8bit_trainvaltest'
+        mask_path = os.path.join(root, 'gtFine_trainvaltest', 'gtFine', mode)
+        mask_postfix = '_gtFine_labelIds.png'
+    img_path = os.path.join(root, img_dir_name, 'leftImg8bit', mode)
+    assert os.listdir(img_path) == os.listdir(mask_path)
     items = []
-
-    if mode in ['train','val']:
-        for c in categories:
-            fr = 0
-            for inps in sorted(os.listdir(os.path.join(input_dir,c))):
-                if fr <= 29:
-                    if fr == 19:
-                        imgs.append(os.path.join(input_dir,c,inps))
-                    fr = fr+1
-                else:
-                    fr = 1
-
-            #loading the ground truth of 19th and 20th image of dataset
-            for gt in sorted(os.listdir(os.path.join(gt_dir,c))):
-                if gt.endswith('_gtFine_labelIds.png'):
-                    gts.append(os.path.join(gt_dir,c,gt))
-
-    for img,gt in zip(imgs,gts):
-        items.append((img,gt))
-
+    categories = os.listdir(img_path)
+    for c in categories:
+        c_items = [name.split('_leftImg8bit.png')[0] for name in os.listdir(os.path.join(img_path, c))]
+        for it in c_items:
+            item = (os.path.join(img_path, c, it + '_leftImg8bit.png'), os.path.join(mask_path, c, it + mask_postfix))
+            items.append(item)
     return items
 
 class CityScapes(data.Dataset):
     def __init__(self,mode = None,simul_transform=None, transform=None, target_transform=None,resize_transform = None):
-        self.imgs = make_dataset(mode)
+        self.imgs = make_dataset(quality = 'fine',mode = mode)
 
         if len(self.imgs) == 0:
             raise (RuntimeError('Found 0 images, please check the data set'))
@@ -76,21 +61,14 @@ class CityScapes(data.Dataset):
     def __getitem__(self, index):
         
         imgs,gts = self.imgs[index]
-        imgs,gts = Image.open(imgs).convert('RGB'),Image.open(gts)
-        
+        imgs,gts = Image.open(imgs),Image.open(gts)
+        imgs = np.asarray(imgs,dtype = np.float32)
         gts = np.array(gts)
         gts_copy = gts.copy()
 
         for k, v in self.id_to_trainid.items():
             gts_copy[gts == k] = v
         gts = Image.fromarray(gts_copy.astype(np.uint8))   
-
-        if self.resize_transform is not None:
-            imgs = self.resize_transform(imgs)
-            gts = self.resize_transform(gts)
-
-        if self.simul_transform is not None:
-            imgs,gts = self.simul_transform(imgs,gts)
 
         if self.transform is not None:
             imgs = self.transform(imgs)
